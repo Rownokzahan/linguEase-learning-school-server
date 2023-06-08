@@ -28,6 +28,9 @@ const client = new MongoClient(uri, {
 });
 
 const programCollection = client.db("linguaEaseDB").collection("programs");
+const instructorCollection = client
+  .db("linguaEaseDB")
+  .collection("instructors");
 
 app.get("/programs", async (req, res) => {
   const result = await programCollection.find().toArray();
@@ -41,6 +44,24 @@ app.get("/programs/popular", async (req, res) => {
     .limit(6)
     .toArray();
   res.send(result);
+});
+
+app.get("/instructors/popular", async (req, res) => {
+  const programs = await programCollection.find().toArray();
+  const instructors = await instructorCollection.find().toArray();
+
+  // Sort instructors based on the number of enrolled students
+  instructors.sort((a, b) => {
+    const instructorA = programs.find(
+      (program) => program.instructor_email === a.email
+    );
+    const instructorB = programs.find(
+      (program) => program.instructor_email === b.email
+    );
+    return instructorB.enrolled - instructorA.enrolled;
+  });
+
+  res.json(instructors.slice(0,6));
 });
 
 app.get("/", (req, res) => {
