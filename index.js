@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 const port = process.env.PORT;
@@ -15,6 +16,27 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
+const verifyJWT = (req, res, next) => {
+  const authorization = req.headers.authorization;
+  if (!authorization) {
+    return res
+      .status(401)
+      .send({ error: true, message: "unauthorized access" });
+  }
+  // bearer token
+  const token = authorization.split(" ")[1];
+
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) {
+      return res
+        .status(401)
+        .send({ error: true, message: "unauthorized access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+};
+
 // const uri = "mongodb://localhost:27017/";
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.jxgrj34.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -27,11 +49,36 @@ const client = new MongoClient(uri, {
   },
 });
 
+const userCollection = client.db("linguaEaseDB").collection("users");
 const programCollection = client.db("linguaEaseDB").collection("programs");
 const instructorCollection = client
   .db("linguaEaseDB")
   .collection("instructors");
 
+// jwt routes
+app.post("/jwt", (req, res) => {
+  const user = req.body;
+  const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+    expiresIn: "1h",
+  });
+
+  res.send({ token });
+});
+
+// user routes
+
+app.post("/users", async (req, res) => {
+  const user = req.body;
+  const email = user.email;
+  const alreadyExists = await userCollection.findOne({ email: email });
+  if (alreadyExists) {
+    return res.send({ message: "User Already Exists" });
+  }
+  const result = await userCollection.insertOne(user);
+  res.send(result);
+});
+
+// programs routes
 app.get("/programs", async (req, res) => {
   const result = await programCollection.find().toArray();
   res.send(result);
@@ -43,6 +90,12 @@ app.get("/programs/popular", async (req, res) => {
     .sort({ enrolled: -1 })
     .limit(6)
     .toArray();
+  res.send(result);
+});
+
+// instructors routes
+app.get("/instructors", async (req, res) => {
+  const result = await instructorCollection.find().toArray();
   res.send(result);
 });
 
@@ -61,7 +114,7 @@ app.get("/instructors/popular", async (req, res) => {
     return instructorB.enrolled - instructorA.enrolled;
   });
 
-  res.json(instructors.slice(0,6));
+  res.json(instructors.slice(0, 6));
 });
 
 app.get("/", (req, res) => {
