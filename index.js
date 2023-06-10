@@ -147,7 +147,9 @@ app.get("/selected-programs/:email", async (req, res) => {
     const program = programs.find(
       (program) => program._id.toString() === item.programId.toString()
     );
-    return program;
+
+    item.program = program;
+    return item;
   });
   res.send(selectedPrograms);
 });
@@ -164,6 +166,14 @@ app.post("/selected-programs", async (req, res) => {
     return res.send({ message: "already exists" });
   }
   const result = await selectedProgramCollection.insertOne(newSeletedProgram);
+  res.send(result);
+});
+
+app.delete("/selected-programs/:id", async (req, res) => {
+  const id = req.params.id;
+  const result = await selectedProgramCollection.deleteOne({
+    _id: new ObjectId(id),
+  });
   res.send(result);
 });
 
