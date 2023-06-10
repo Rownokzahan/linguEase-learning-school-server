@@ -209,6 +209,26 @@ app.post("/create-payment-intent", verifyJWT, async (req, res) => {
   });
 });
 
+app.post("/payments", verifyJWT, async (req, res) => {
+  const payment = req.body;
+
+  // Increase Enrolled student number in program
+  const programId = payment.programId;
+  const filter = { _id: new ObjectId(programId) };
+  const update = { $inc: { enrolled: 1 } }; // TODO:
+  const updateResult = await programCollection.updateOne(filter, update);
+
+  // delete program from selected programs
+  selectedProgramId = payment.selectedProgramId;
+  delete payment.selectedProgramId;
+  const query = { _id: new ObjectId(selectedProgramId) };
+  const deleteResult = await selectedProgramCollection.deleteOne(query);
+
+  // insert payement
+  const insertResult = await paymentCollection.insertOne(payment);
+
+  res.send({ updateResult, deleteResult, insertResult });
+});
 
 // base route
 app.get("/", (req, res) => {
