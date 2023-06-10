@@ -135,6 +135,15 @@ app.get("/instructors/popular", async (req, res) => {
   res.json(instructors.slice(0, 6));
 });
 
+// selected programs routes
+app.get("/selected-programs/:email", async (req, res) => {
+  const email = req.params.email;
+  const result = await selectedProgramCollection
+    .find({ email: email })
+    .toArray();
+  res.send(result);
+});
+
 app.get("/", (req, res) => {
   res.send({ message: "LinguaEase server is running" });
 });
