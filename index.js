@@ -144,6 +144,13 @@ app.get("/selected-programs/:email", async (req, res) => {
   res.send(result);
 });
 
+app.post("/selected-programs", async (req, res) => {
+  const newSeletedProgram = req.body;
+  const result = await selectedProgramCollection.insertOne(newSeletedProgram);
+  res.send(result);
+});
+
+// base route
 app.get("/", (req, res) => {
   res.send({ message: "LinguaEase server is running" });
 });
