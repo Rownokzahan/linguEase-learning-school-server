@@ -230,6 +230,26 @@ app.post("/payments", verifyJWT, async (req, res) => {
   res.send({ updateResult, deleteResult, insertResult });
 });
 
+// enrolled programs routes
+app.get("/enrolled-programs/:email", async (req, res) => {
+  const email = req.params.email;
+
+  const programs = await programCollection.find().toArray();
+  const items = await paymentCollection
+    .find({ email: email })
+    .toArray();
+
+  const enrolledPrograms = items.map((item) => {
+    const program = programs.find(
+      (program) => program._id.toString() === item.programId.toString()
+    );
+
+    item.program = program;
+    return item;
+  });
+  res.send(enrolledPrograms);
+});
+
 // base route
 app.get("/", (req, res) => {
   res.send({ message: "LinguaEase server is running" });
