@@ -235,9 +235,7 @@ app.get("/enrolled-programs/:email", async (req, res) => {
   const email = req.params.email;
 
   const programs = await programCollection.find().toArray();
-  const items = await paymentCollection
-    .find({ email: email })
-    .toArray();
+  const items = await paymentCollection.find({ email: email }).toArray();
 
   const enrolledPrograms = items.map((item) => {
     const program = programs.find(
@@ -248,6 +246,28 @@ app.get("/enrolled-programs/:email", async (req, res) => {
     return item;
   });
   res.send(enrolledPrograms);
+});
+
+// payment history routes
+app.get("/payment-history/:email", async (req, res) => {
+  const email = req.params.email;
+
+  const programs = await programCollection.find().toArray();
+  const payments = await paymentCollection
+    .find({ email: email })
+    .sort({ date: "desc" })
+    .toArray();
+
+  const paymentsHistory = payments.map((payment) => {
+    const program = programs.find(
+      (program) => program._id.toString() === payment.programId.toString()
+    );
+
+    payment.program = program;
+    return payment;
+  });
+
+  res.send(paymentsHistory);
 });
 
 // base route
