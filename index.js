@@ -69,6 +69,12 @@ app.post("/jwt", (req, res) => {
 });
 
 // user routes
+app.get("/users", async (req, res) => {
+  const email = req.params.email;
+  const result = await userCollection.find().toArray();
+  res.send(result);
+});
+
 
 app.post("/users", async (req, res) => {
   const user = req.body;
