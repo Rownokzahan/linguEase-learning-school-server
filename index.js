@@ -137,10 +137,19 @@ app.get("/instructors/popular", async (req, res) => {
 // selected programs routes
 app.get("/selected-programs/:email", async (req, res) => {
   const email = req.params.email;
-  const result = await selectedProgramCollection
+
+  const programs = await programCollection.find().toArray();
+  const items = await selectedProgramCollection
     .find({ email: email })
     .toArray();
-  res.send(result);
+
+  const selectedPrograms = items.map((item) => {
+    const program = programs.find(
+      (program) => program._id.toString() === item.programId.toString()
+    );
+    return program;
+  });
+  res.send(selectedPrograms);
 });
 
 app.post("/selected-programs", async (req, res) => {
