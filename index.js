@@ -54,6 +54,9 @@ const programCollection = client.db("linguaEaseDB").collection("programs");
 const instructorCollection = client
   .db("linguaEaseDB")
   .collection("instructors");
+const selectedProgramCollection = client
+  .db("linguaEaseDB")
+  .collection("selectedPrograms");
 
 // jwt routes
 app.post("/jwt", (req, res) => {
@@ -74,6 +77,8 @@ app.post("/users", async (req, res) => {
   if (alreadyExists) {
     return res.send({ message: "User Already Exists" });
   }
+
+  user.role = "student";
   const result = await userCollection.insertOne(user);
   res.send(result);
 });
