@@ -79,7 +79,6 @@ app.get("/users/role/:email", async (req, res) => {
   const email = req.params.email;
   const result = await userCollection.findOne({ email: email });
   const role = result?.role || "none";
-  console.log(role);
   res.send(role);
 });
 
@@ -146,6 +145,15 @@ app.get("/selected-programs/:email", async (req, res) => {
 
 app.post("/selected-programs", async (req, res) => {
   const newSeletedProgram = req.body;
+  const alreadyExists = await selectedProgramCollection.findOne({
+    $and: [
+      { email: newSeletedProgram.email },
+      { programId: newSeletedProgram.programId },
+    ],
+  });
+  if (alreadyExists) {
+    return res.send({ message: "already exists" });
+  }
   const result = await selectedProgramCollection.insertOne(newSeletedProgram);
   res.send(result);
 });
