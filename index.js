@@ -58,6 +58,7 @@ const instructorCollection = client
 const selectedProgramCollection = client
   .db("linguaEaseDB")
   .collection("selectedPrograms");
+const paymentCollection = client.db("linguaEaseDB").collection("payments");
 
 // jwt routes
 app.post("/jwt", (req, res) => {
@@ -153,6 +154,20 @@ app.get("/selected-programs/:email", async (req, res) => {
     return item;
   });
   res.send(selectedPrograms);
+});
+
+app.get("/selected-programs/program/:id", async (req, res) => {
+  const id = req.params.id;
+
+  const selectedProgram = await selectedProgramCollection.findOne({
+    _id: new ObjectId(id),
+  });
+  const program = await programCollection.findOne({
+    _id: new ObjectId(selectedProgram.programId),
+  });
+
+  selectedProgram.program = program;
+  res.send(selectedProgram);
 });
 
 app.post("/selected-programs", async (req, res) => {
