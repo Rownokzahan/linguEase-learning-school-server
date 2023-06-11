@@ -112,6 +112,16 @@ app.get("/programs/popular", async (req, res) => {
   res.send(result);
 });
 
+app.post("/programs", async (req, res) => {
+  const newProgram = req.body;
+  newProgram.enrolled = 0;
+  newProgram.status = "pending";
+  newProgram.feedback = "N/A";
+
+  const result = await programCollection.insertOne(newProgram);
+  res.send(result);
+});
+
 // instructors routes
 app.get("/instructors", async (req, res) => {
   const result = await instructorCollection.find().toArray();
@@ -122,7 +132,7 @@ app.get("/instructors/popular", async (req, res) => {
   const programs = await programCollection.find().toArray();
   const instructors = await instructorCollection.find().toArray();
 
-  // Sort instructors based on the number of enrolled students
+  //  Sort instructors based on the number of enrolled students
   instructors.sort((a, b) => {
     const instructorA = programs.find(
       (program) => program.instructor_email === a.email
