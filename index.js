@@ -149,6 +149,18 @@ app.post("/programs", async (req, res) => {
   res.send(result);
 });
 
+app.patch("/programs/:id", async (req, res) => {
+  const id = req.params.id;
+  const filter = { _id: new ObjectId(id) };
+  const updateStatus = {
+    $set: {
+      status: req?.body?.status,
+    },
+  };
+  const result = await programCollection.updateOne(filter, updateStatus);
+  res.send(result);
+});
+
 // instructors routes
 app.get("/instructors", async (req, res) => {
   const result = await instructorCollection.find().toArray();
