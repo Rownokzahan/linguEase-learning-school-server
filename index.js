@@ -112,6 +112,22 @@ app.get("/programs/popular", async (req, res) => {
   res.send(result);
 });
 
+app.get("/programs/program/:id", async (req, res) => {
+  const id = req.params.id;
+  const result = await programCollection
+    .find({ _id: new ObjectId(id) })
+    .toArray();
+  res.send(result);
+});
+
+app.get("/programs/:email", async (req, res) => {
+  const email = req.params.email;
+  const result = await programCollection
+    .find({ instructor_email: email })
+    .toArray();
+  res.send(result);
+});
+
 app.post("/programs", async (req, res) => {
   const newProgram = req.body;
   newProgram.enrolled = 0;
@@ -128,23 +144,23 @@ app.get("/instructors", async (req, res) => {
   res.send(result);
 });
 
-app.get("/instructors/popular", async (req, res) => {
-  const programs = await programCollection.find().toArray();
-  const instructors = await instructorCollection.find().toArray();
+// app.get("/instructors/popular", async (req, res) => {
+//   const programs = await programCollection.find().toArray();
+//   const instructors = await instructorCollection.find().toArray();
 
-  //  Sort instructors based on the number of enrolled students
-  instructors.sort((a, b) => {
-    const instructorA = programs.find(
-      (program) => program.instructor_email === a.email
-    );
-    const instructorB = programs.find(
-      (program) => program.instructor_email === b.email
-    );
-    return instructorB.enrolled - instructorA.enrolled;
-  });
+//   //  Sort instructors based on the number of enrolled students
+//   instructors.sort((a, b) => {
+//     const instructorA = programs.find(
+//       (program) => program.instructor_email === a.email
+//     );
+//     const instructorB = programs.find(
+//       (program) => program.instructor_email === b.email
+//     );
+//     return instructorB.enrolled - instructorA.enrolled;
+//   });
 
-  res.json(instructors.slice(0, 6));
-});
+//   res.json(instructors.slice(0, 6));
+// });
 
 // selected programs routes
 app.get("/selected-programs/:email", async (req, res) => {
