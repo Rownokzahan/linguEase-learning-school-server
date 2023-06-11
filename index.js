@@ -161,6 +161,18 @@ app.patch("/programs/:id", async (req, res) => {
   res.send(result);
 });
 
+app.patch("/programs/feedback/:id", async (req, res) => {
+  const id = req.params.id;
+  const filter = { _id: new ObjectId(id) };
+  const updateFeedback = {
+    $set: {
+      feedback: req?.body?.feedback,
+    },
+  };
+  const result = await programCollection.updateOne(filter, updateFeedback);
+  res.send(result);
+});
+
 // instructors routes
 app.get("/instructors", async (req, res) => {
   const result = await instructorCollection.find().toArray();
