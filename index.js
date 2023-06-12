@@ -288,22 +288,31 @@ app.post("/create-payment-intent", verifyJWT, async (req, res) => {
 app.post("/payments", verifyJWT, async (req, res) => {
   const payment = req.body;
 
-  // Increase Enrolled student number in program
+  // Update enrolled student number and decrease available seats in program
   const programId = payment.programId;
   const filter = { _id: new ObjectId(programId) };
-  const update = { $inc: { enrolled: 1 } }; // TODO:
+  const update = {
+    $inc: {
+      enrolled: 1,
+      available_seats: -1,
+    },
+  };
   const updateResult = await programCollection.updateOne(filter, update);
 
-  // delete program from selected programs
-  selectedProgramId = payment.selectedProgramId;
+  // Delete program from selected programs
+  const selectedProgramId = payment.selectedProgramId;
   delete payment.selectedProgramId;
-  const query = { _id: new ObjectId(selectedProgramId) };
-  const deleteResult = await selectedProgramCollection.deleteOne(query);
+  const deleteQuery = { _id: new ObjectId(selectedProgramId) };
+  const deleteResult = await selectedProgramCollection.deleteOne(deleteQuery);
 
-  // insert payement
+  // Insert payment
   const insertResult = await paymentCollection.insertOne(payment);
 
-  res.send({ updateResult, deleteResult, insertResult });
+  res.send({
+    updateResult,
+    deleteResult,
+    insertResult,
+  });
 });
 
 // enrolled programs routes
