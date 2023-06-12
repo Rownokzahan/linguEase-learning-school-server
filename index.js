@@ -38,6 +38,16 @@ const verifyJWT = (req, res, next) => {
   });
 };
 
+const verifyAdmin = async (req, res, next) => {
+  const email = req.decoded.email;
+
+  const user = await userCollection.findOne({ email: email });
+  if (user?.role !== "admin") {
+    return res.status(403).send({ error: true, message: "forbidden access" });
+  }
+  next();
+};
+
 // const uri = "mongodb://localhost:27017/";
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.jxgrj34.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -71,7 +81,7 @@ app.post("/jwt", (req, res) => {
 });
 
 // user routes
-app.get("/users", async (req, res) => {
+app.get("/users", verifyJWT, verifyAdmin, async (req, res) => {
   const result = await userCollection.find().toArray();
   res.send(result);
 });
@@ -96,7 +106,7 @@ app.post("/users", async (req, res) => {
   res.send(result);
 });
 
-app.patch("/users/:id", async (req, res) => {
+app.patch("/users/:id", verifyJWT, verifyAdmin, async (req, res) => {
   const id = req.params.id;
   const filter = { _id: new ObjectId(id) };
   const updateRole = {
@@ -131,7 +141,7 @@ app.get("/programs/program/:id", async (req, res) => {
   res.send(result);
 });
 
-app.get("/programs/:email", async (req, res) => {
+app.get("/programs/:email", verifyJWT, async (req, res) => {
   const email = req.params.email;
   const result = await programCollection
     .find({ instructor_email: email })
@@ -139,7 +149,7 @@ app.get("/programs/:email", async (req, res) => {
   res.send(result);
 });
 
-app.post("/programs", async (req, res) => {
+app.post("/programs", verifyJWT, async (req, res) => {
   const newProgram = req.body;
   newProgram.enrolled = 0;
   newProgram.status = "pending";
@@ -149,7 +159,7 @@ app.post("/programs", async (req, res) => {
   res.send(result);
 });
 
-app.patch("/programs/:id", async (req, res) => {
+app.patch("/programs/:id", verifyJWT, verifyAdmin, async (req, res) => {
   const id = req.params.id;
   const filter = { _id: new ObjectId(id) };
   const updateStatus = {
@@ -161,17 +171,22 @@ app.patch("/programs/:id", async (req, res) => {
   res.send(result);
 });
 
-app.patch("/programs/feedback/:id", async (req, res) => {
-  const id = req.params.id;
-  const filter = { _id: new ObjectId(id) };
-  const updateFeedback = {
-    $set: {
-      feedback: req?.body?.feedback,
-    },
-  };
-  const result = await programCollection.updateOne(filter, updateFeedback);
-  res.send(result);
-});
+app.patch(
+  "/programs/feedback/:id",
+  verifyJWT,
+  verifyAdmin,
+  async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) };
+    const updateFeedback = {
+      $set: {
+        feedback: req?.body?.feedback,
+      },
+    };
+    const result = await programCollection.updateOne(filter, updateFeedback);
+    res.send(result);
+  }
+);
 
 // instructors routes
 app.get("/instructors", async (req, res) => {
@@ -179,26 +194,26 @@ app.get("/instructors", async (req, res) => {
   res.send(result);
 });
 
-// app.get("/instructors/popular", async (req, res) => {
-//   const programs = await programCollection.find().toArray();
-//   const instructors = await instructorCollection.find().toArray();
+app.get("/instructors/popular", async (req, res) => {
+  const programs = await programCollection.find().toArray();
+  const instructors = await instructorCollection.find().toArray();
 
-//   //  Sort instructors based on the number of enrolled students
-//   instructors.sort((a, b) => {
-//     const instructorA = programs.find(
-//       (program) => program.instructor_email === a.email
-//     );
-//     const instructorB = programs.find(
-//       (program) => program.instructor_email === b.email
-//     );
-//     return instructorB.enrolled - instructorA.enrolled;
-//   });
+  //  Sort instructors based on the number of enrolled students
+  instructors.sort((a, b) => {
+    const instructorA = programs.find(
+      (program) => program.instructor_email === a.email
+    );
+    const instructorB = programs.find(
+      (program) => program.instructor_email === b.email
+    );
+    return instructorB.enrolled - instructorA.enrolled;
+  });
 
-//   res.json(instructors.slice(0, 6));
-// });
+  res.json(instructors.slice(0, 6));
+});
 
 // selected programs routes
-app.get("/selected-programs/:email", async (req, res) => {
+app.get("/selected-programs/:email", verifyJWT, async (req, res) => {
   const email = req.params.email;
 
   const programs = await programCollection.find().toArray();
@@ -217,7 +232,7 @@ app.get("/selected-programs/:email", async (req, res) => {
   res.send(selectedPrograms);
 });
 
-app.get("/selected-programs/program/:id", async (req, res) => {
+app.get("/selected-programs/program/:id", verifyJWT, async (req, res) => {
   const id = req.params.id;
 
   const selectedProgram = await selectedProgramCollection.findOne({
@@ -231,7 +246,7 @@ app.get("/selected-programs/program/:id", async (req, res) => {
   res.send(selectedProgram);
 });
 
-app.post("/selected-programs", async (req, res) => {
+app.post("/selected-programs", verifyJWT, async (req, res) => {
   const newSeletedProgram = req.body;
   const alreadyExists = await selectedProgramCollection.findOne({
     $and: [
@@ -246,7 +261,7 @@ app.post("/selected-programs", async (req, res) => {
   res.send(result);
 });
 
-app.delete("/selected-programs/:id", async (req, res) => {
+app.delete("/selected-programs/:id", verifyJWT, async (req, res) => {
   const id = req.params.id;
   const result = await selectedProgramCollection.deleteOne({
     _id: new ObjectId(id),
@@ -292,7 +307,7 @@ app.post("/payments", verifyJWT, async (req, res) => {
 });
 
 // enrolled programs routes
-app.get("/enrolled-programs/:email", async (req, res) => {
+app.get("/enrolled-programs/:email", verifyJWT, async (req, res) => {
   const email = req.params.email;
 
   const programs = await programCollection.find().toArray();
@@ -310,7 +325,7 @@ app.get("/enrolled-programs/:email", async (req, res) => {
 });
 
 // payment history routes
-app.get("/payment-history/:email", async (req, res) => {
+app.get("/payment-history/:email", verifyJWT, async (req, res) => {
   const email = req.params.email;
 
   const programs = await programCollection.find().toArray();
